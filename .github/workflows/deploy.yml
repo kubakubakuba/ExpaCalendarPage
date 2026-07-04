@@ -36,12 +36,39 @@ jobs:
       - name: Generate index.html
         run: |
           cd programy2026
+          
           echo "<!DOCTYPE html><html><head><title>Astronomická expedice - Programy</title></head><body>" > index.html
           echo "<h1>Dostupné programy</h1><ul>" >> index.html
+          
+          echo "<li><strong><a href=\"latest/\">Dnešní program (/latest)</a></strong></li><br>" >> index.html
+          
           for f in *.pdf; do
             echo "<li><a href=\"$f\">$f</a></li>" >> index.html
           done
           echo "</ul></body></html>" >> index.html
+          
+          mkdir latest
+          cat << 'EOF' > latest/index.html
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Redirecting...</title>
+              <script>
+                  let d = new Date().toLocaleString("en-US", {timeZone: "Europe/Prague"});
+                  let pragueDate = new Date(d);
+                  let year = pragueDate.getFullYear();
+                  let month = String(pragueDate.getMonth() + 1).padStart(2, '0');
+                  let day = String(pragueDate.getDate()).padStart(2, '0');
+                  
+                  let filename = `../program_${year}_${month}_${day}.pdf`;
+                  window.location.replace(filename);
+              </script>
+          </head>
+          <body>
+              <p>Redirecting to today's schedule...</p>
+          </body>
+          </html>
+          EOF
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
