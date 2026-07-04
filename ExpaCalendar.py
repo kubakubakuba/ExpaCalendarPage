@@ -133,7 +133,7 @@ class ExpaCalendar:
 
 		return img[0]
 	
-	def generate_timestamps(self, date: str, pdf) -> None:
+	def generate_timestamps(self, date: str, pdf, events) -> None:
 		current_x, current_y = pdf.get_x(), pdf.get_y() #get cursor location
 
 		twilight = Twilight(self.CONFIG.lat, self.CONFIG.lng, date, self.CONFIG.tmz).data
@@ -160,17 +160,15 @@ class ExpaCalendar:
 		sunset_dt = datetime.fromisoformat(twilight["sunset"]).strftime('%H:%M:%S')
 		moonrise_dt = datetime.fromisoformat(twilight["moonrise"]).strftime('%H:%M:%S') if twilight["moonrise"] != '-' else datetime.fromisoformat(twilight_tomorrow["moonrise"]).strftime('%H:%M:%S')
 		moonset_dt = datetime.fromisoformat(twilight["moonset"]).strftime('%H:%M:%S') if twilight["moonset"] != '-' else datetime.fromisoformat(twilight_tomorrow["moonset"]).strftime('%H:%M:%S')
-		
-		golden_begin_time_m = datetime.fromisoformat(twilight["golden_hour_morning"]["start"]).time().strftime('%H:%M:%S')
-		golden_end_time_m = datetime.fromisoformat(twilight["golden_hour_morning"]["end"]).time().strftime('%H:%M:%S')
-		golden_begin_time_e = datetime.fromisoformat(twilight["golden_hour_evening"]["start"]).time().strftime('%H:%M:%S')
-		golden_end_time_e = datetime.fromisoformat(twilight["golden_hour_evening"]["end"]).time().strftime('%H:%M:%S')
-
-		#'astronomical_twilight_begin': sunrise_sunset_data['astronomical_twilight_begin'],
-		#	'astronomical_twilight_end':
 
 		astron_from = datetime.fromisoformat(twilight["astronomical_twilight_begin"]).time().strftime('%H:%M:%S')
 		astron_to = datetime.fromisoformat(twilight["astronomical_twilight_end"]).time().strftime('%H:%M:%S')
+
+		# Astronomical night logic check
+		if astron_from == astron_to:
+			astron_text = "žádná není lol"
+		else:
+			astron_text = f"{astron_to} - {astron_from}"
 
 		pdf.set_xy(145, 50)
 		pdf.cell(0, 0, txt=f'{moonrise_dt}', ln=False, align="L")
@@ -185,29 +183,35 @@ class ExpaCalendar:
 		pdf.cell(0, 0, txt=f'{sunrise_dt}', ln=False, align="L")
 
 		pdf.set_xy(145, 70)
-		pdf.cell(0, 0, txt=f'Astron. noc: {astron_to} - {astron_from}', ln=False, align="L")
-
-		#pdf.set_xy(145, 80)
-		#pdf.cell(0, 0, txt=f'Zlatá hodinka: {golden_begin_time_m} - {golden_end_time_m}', ln=True, align="L")
-
-		#pdf.set_xy(145, 85)
-		#pdf.cell(0, 0, txt=f'                          {golden_begin_time_e} - {golden_end_time_e}', ln=False, align="L")
-
-		#moon_img = self.get_moon_phase_image(twilight["moon_phase_num"])
-
-		#pdf.image(moon_img, 135, 36.5, 6, 6)
+		pdf.cell(0, 0, txt=f'Astron. noc: {astron_text}', ln=False, align="L")
 
 		pdf.image("img/moonrise.png", 135, 46.5, 6, 6)
-
 		pdf.image("img/moonset.png", 165, 46.5, 6, 6)
-
 		pdf.image("img/sunset.png", 135, 56.5, 6, 6)
-
 		pdf.image("img/sunrise.png", 165, 56.5, 6, 6)
-
 		pdf.image("img/telescope.png", 135, 66.5, 6, 6)
 		
-		#pdf.image("img/sun.png", 135, 76.5, 6, 6)
+		# --- ISS DATA EXTRACTION AND PRINTING ---
+		iss_passes = []
+		for time, event_data in events:
+			summary = event_data['summary'].lstrip("# ")
+			if summary.startswith("ISS"):
+				# Remove redundant text to save space on the right side
+				clean_info = summary.replace("ISS přelet", "").strip()
+				iss_passes.append(f"{time} {clean_info}")
+		
+		if iss_passes:
+			pdf.image("img/satellite.png", 135, 86.5, 6, 6)
+			pdf.set_xy(145, 90)
+			pdf.set_font("Roboto-Regular", "", 10)
+			pdf.cell(0, 0, txt="ISS Přelety:", ln=False, align="L")
+			
+			pdf.set_font("Roboto-Regular", "", 8)
+			y_pos = 95
+			for iss_pass in iss_passes:
+				pdf.set_xy(145, y_pos)
+				pdf.cell(0, 0, txt=iss_pass, ln=False, align="L")
+				y_pos += 4
 
 		pdf.set_xy(current_x, current_y) #reset cursor
 
@@ -246,7 +250,7 @@ class ExpaCalendar:
 			pdf.add_font('SegoeUI', '', 'fonts/segoe-ui.ttf', uni=True)
 			pdf.add_font('DejaVu', '', 'fonts/DejaVuSans.ttf', uni=True)
 			
-			self.generate_timestamps(date_str, pdf)
+			self.generate_timestamps(date_str, pdf, events)
 
 			pdf.set_font('Roboto-Regular', '', 12)
 
