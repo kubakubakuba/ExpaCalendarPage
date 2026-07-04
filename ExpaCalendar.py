@@ -358,7 +358,7 @@ class ExpaCalendar:
 			pdf.text(pdf.w - 20 - pdf.get_string_width(footer_text) / 2, pdf.h - 14, footer_text)
 
 			pdf.set_font("Roboto-Regular", size=8)
-			pdf.text(10, pdf.h - 14, "V programu může dojít ke změnám. Aktuální verze programu je v online verzi dynamického programu.")
+			pdf.text(10, pdf.h - 14, "V programu může dojít ke změnám. Aktuální verze programu je v online verzi dynamického programu a na stránkách Expedice.")
 			
 			pdf.text(10, pdf.h - 10, "V případě špatného počasí bude místo pozorování vymyšlen náhradní program. Pozorování je možné prodloužit po dohodě s vedoucím.")
 		
