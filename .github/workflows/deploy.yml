@@ -1,0 +1,60 @@
+name: Generate and Deploy Calendars
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Inject Google Credentials
+        run: |
+          echo "${{ secrets.CREDENTIALS_JSON }}" > credentials.json
+          echo "${{ secrets.TOKEN_PICKLE_B64 }}" | base64 --decode > token.pickle
+
+      - name: Run PDF Generator
+        run: python generate.py
+
+      - name: Generate index.html
+        run: |
+          cd programy2026
+          echo "<!DOCTYPE html><html><head><title>Astronomická expedice - Programy</title></head><body>" > index.html
+          echo "<h1>Dostupné programy</h1><ul>" >> index.html
+          for f in *.pdf; do
+            echo "<li><a href=\"$f\">$f</a></li>" >> index.html
+          done
+          echo "</ul></body></html>" >> index.html
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./programy2026
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

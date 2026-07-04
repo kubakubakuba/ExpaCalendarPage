@@ -216,3 +216,7 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+token.pickle
+credentials.json
+token_b64.txt
