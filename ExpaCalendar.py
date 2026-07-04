@@ -290,10 +290,21 @@ class ExpaCalendar:
 					pdf.set_xy(cx, cy) #reset cursor
 					continue
 
-				skip = ["Východ Slunce", "Západ Slunce", "Východ Měsíce", "Západ Měsíce", "@služba", "@sluzba"]
+				skip_prefixes = (
+					"Východ Slunce", "Západ Slunce", "Východ Měsíce", "Západ Měsíce",
+					"Východ slunce", "Západ slunce", "Východ měsíce", "Západ měsíce",
+					"@služba", "@sluzba", "ISS přelet", "ISS"
+				)
 				
 				summary = event_data['summary']
-				if summary in skip or (summary.startswith("# ") and summary[2:] in skip) or (summary.startswith("#") and summary[1:] in skip):
+				print(f"SUMMARY: {summary}")
+				
+				# Strip leading hashtags and spaces to normalize the string
+				clean_summary = summary.lstrip("# ")
+				
+				# If the normalized summary starts with any of the prefixes, skip it
+				if clean_summary.startswith(skip_prefixes):
+					print(f"SKIPPING")
 					continue
 
 				pdf.set_font("Righteous", "", 12)
