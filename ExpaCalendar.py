@@ -249,6 +249,8 @@ class ExpaCalendar:
 			pdf.add_font('NotoEmoji', '', 'fonts/NotoEmoji-Regular.ttf', uni=True)
 			pdf.add_font('SegoeUI', '', 'fonts/segoe-ui.ttf', uni=True)
 			pdf.add_font('DejaVu', '', 'fonts/DejaVuSans.ttf', uni=True)
+
+			pdf.set_fallback_fonts(['NotoEmoji', 'DejaVu'])
 			
 			self.generate_timestamps(date_str, pdf, events)
 
@@ -329,12 +331,34 @@ class ExpaCalendar:
 				
 				if event_data['description'] != "":
 					indent += 1
-					pdf.set_font("Roboto-Regular", "", 8)
-					pdf.cell(10)  # Indent for description
-					#remove empty newlines
-					event_data['description'] = "\n".join(line for line in event_data['description'].splitlines() if line.strip())
-					pdf.multi_cell(0, 5, txt=event_data['description'], border=0, ln=True)
-					#add empty line after description
+
+					# Force a newline if the location was empty to prevent overlapping the time
+					if event_data['location'] == "":
+                        			pdf.ln(6)
+
+					desc = event_data['description'].replace("<br>", "\n").replace("<br/>", "\n").replace("</br>", "\n")
+					desc = "\n".join(line for line in desc.splitlines() if line.strip())
+
+					original_l_margin = pdf.l_margin
+					pdf.set_left_margin(original_l_margin + 10)
+					pdf.set_x(original_l_margin + 10)
+
+					parts = desc.split("<i>")
+					for i, part in enumerate(parts):
+						if "</i>" in part:
+							italic_text, regular_text = part.split("</i>", 1)
+
+							pdf.set_font("Roboto-ThinItalic", "", 8)
+							pdf.write(5, txt=italic_text)
+
+							pdf.set_font("Roboto-Regular", "", 8)
+							pdf.write(5, txt=regular_text)
+						else:
+							pdf.set_font("Roboto-Regular", "", 8)
+							pdf.write(5, txt=part)
+
+					pdf.set_left_margin(original_l_margin)
+					pdf.ln(5)
 					pdf.cell(0, 2.5, txt="", border=0, ln=True)
 				
 				if indent < 1:
