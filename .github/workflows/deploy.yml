@@ -45,7 +45,20 @@ jobs:
           for f in *.pdf; do
             echo "<li><a href=\"$f\">$f</a></li>" >> index.html
           done
-          echo "</ul></body></html>" >> index.html
+          echo "</ul>" >> index.html
+          
+          cat << 'EOF' >> index.html
+          <div style="margin-top: 40px; border-top: 1px solid #ccc; padding-top: 10px;">
+              Počet dní od posledního pochcaného expedičníka vedoucím: <strong><span id="daysCounter"></span></strong>
+          </div>
+          <script>
+              const pastDate = new Date('2026-07-06T00:00:00+02:00');
+              const now = new Date();
+              const diff = Math.floor((now - pastDate) / (1000 * 60 * 60 * 24));
+              document.getElementById('daysCounter').innerText = diff > 0 ? diff : 0;
+          </script>
+          </body></html>
+          EOF
           
           mkdir latest
           cat << 'EOF' > latest/index.html
